@@ -1,21 +1,29 @@
 using UnityEngine;
 
+
 public class InputController : MonoBehaviour
 {
-    [SerializeField] private GameManager gameManager = null;
+    [SerializeField] private ClothChanger _clothChanger;
 
-    private void Awake()
-    {
-        if (gameManager == null && GameObject.Find("GameManager")) 
-        {
-            gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        }
-    }
+    public delegate void AddItemToClothManager(int itemIndex, string itemName);
+    public AddItemToClothManager addItemDelegate;
+
+    public delegate void AddCoins(object sender, int value);
+    public AddCoins AddCoinsDelegate;
+
+    [SerializeField] SceneConfig _sceneConfig;
 
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.F11))
+        {
+            addItemDelegate?.Invoke(1, "BluePants");
+        }
+        if (Input.GetKeyDown(KeyCode.F8))
+        {
+            _sceneConfig.AddCoinsTest(10);
+        }
         ResetAllStatsInput();
-        AddBluePants();
         AddDarkBluePants();
         AddGreenCostume();
     }
@@ -24,22 +32,18 @@ public class InputController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F12))
         {
-            gameManager.ResetAllStats();
+            _clothChanger.ResetAllStats();
+
         }
     }
-    private void AddBluePants()
-    {
-        if (Input.GetKeyDown(KeyCode.F11))
-        {
-            gameManager.AddItem(1, "BluePants");
-        }
-    }
+
+
 
     private void AddDarkBluePants()
     {
         if (Input.GetKeyDown(KeyCode.F10))
         {
-            gameManager.AddItem(2, "DarkBluePants");
+            _clothChanger.AddItem(2, "DarkBluePants");
         }
     }
 
@@ -47,9 +51,8 @@ public class InputController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.F9))
         {
-            gameManager.AddItem(3, "GreenCostume");
-            gameManager.AddItem(4, "IceHat");
+            _clothChanger.AddItem(3, "GreenCostume");
+            _clothChanger.AddItem(4, "IceHat");
         }
     }
-
 }

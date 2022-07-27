@@ -1,33 +1,36 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 public class VendorWindowSpawner : MonoBehaviour
 {
     [SerializeField] private GameObject itemPanel;
     [SerializeField] private TMP_Text itemCostText;
+    [SerializeField] private Button[] buttonsSpawned;
+
     [SerializeField] private GameObject tradeWindowContent;
     private Image itemImageTemporary;
-    private ClothManager clothManager = null;
+    private DataArchitecture.ClothRepository clothRepository = null;
+    [SerializeField] private ItemButtonsManager _itemButtonsManager;
+    private ClothChanger _clothChanger = null;
 
+    private int itemIndex;
+    private bool itemAvailable;
     private int itemsAmount;
-
-    //private List<KeyValuePair<string, int>> itemsNamesList = new List<KeyValuePair<string, int>>();
-    //private Dictionary<string, int> itemsNamesList = new Dictionary<string, int>();
-
+    private bool itemIsBottom;
+    private int cost;
     
 
     private void Awake()
     {
-        // find clothManager
-        if (!clothManager && GameObject.Find("ClothManager"))
-        {
-            clothManager = GameObject.Find("ClothManager").GetComponent<ClothManager>();
-        }
-
-        itemsAmount = 3;
+        clothRepository = new DataArchitecture.ClothRepository();
+        _clothChanger = FindObjectOfType<ClothChanger>();
+        itemsAmount = clothRepository.itemsNamesList.Count;
+        _itemButtonsManager.InitializeButtons(itemsAmount);
+        buttonsSpawned = new Button[itemsAmount];
         
-        tradeWindowContent = GameObject.Find("TradeWindowContent");
+
         if (!tradeWindowContent)
         {
             Debug.Log("tradeWindowContent wasn't found!");
@@ -44,14 +47,29 @@ public class VendorWindowSpawner : MonoBehaviour
             itemImageTemporary = itemPanel.GetComponentInChildren<Image>();
  
             itemImageTemporary.sprite = Resources.Load<Sprite>
-                ("Items/"+ clothManager.itemsNamesList[tempInt].Item2); // Item2 is ItemName
+                ("Items/"+ clothRepository.itemsNamesList[tempInt].Item2); // Item2 is ItemName
+            // проверка, €вл€етс€ ли итем уже доступным герою. ≈сли да, нужна доп.логика на префаб
 
+            
             itemCostText = itemPanel.GetComponentInChildren<TMP_Text>();
-            itemCostText.text = clothManager.itemsNamesList[tempInt].Item3.ToString(); // Item3 is its' cost
+            itemCostText.text = clothRepository.itemsNamesList[tempInt].Item3.ToString(); // Item3 is its' cost
             GameObject newItemContent = Instantiate(itemPanel, new Vector3(0f, 0f, 0f),
                 Quaternion.identity, tradeWindowContent.transform);
+            buttonsSpawned[tempInt] = newItemContent.GetComponentInChildren<Button>();
             newItemContent.name = "itemPanel" + i.ToString();
+
+            // вытаскиваем itemIndex и itemName, isBottom дл€ конкретного предмета
+            itemIndex = clothRepository.itemsNamesList[tempInt].Item1;
+            
+
+            itemAvailable = (Array.Exists(_clothChanger.itemsAvailableIndexArr, x => x == itemIndex));
+            itemIsBottom = clothRepository.itemsNamesList[tempInt].Item4;
+            cost = clothRepository.itemsNamesList[tempInt].Item3;
+
+            //buttonSpawned[tempInt].onClick.AddListener
+            //    (delegate { _itemButtonsManager.Buying(itemIndex, itemAvailable, itemIsBottom, cost); });
+            buttonsSpawned[tempInt].onClick.AddListener
+                (() => _itemButtonsManager.Buying(itemIndex, itemAvailable, itemIsBottom, cost));
         }
     }
-
 }

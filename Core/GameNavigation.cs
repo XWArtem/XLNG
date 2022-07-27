@@ -2,131 +2,87 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
+using System;
+using UnityEngine.Events;
+
+public class TupleList<T1, T2, T3> : List<Tuple<int, Button, UnityAction>>
+{
+    public void Add(int index, Button btn, UnityAction action)
+    {
+        Add(new Tuple<int, Button, UnityAction>(index, btn, action));
+    }
+}
 
 public class GameNavigation : MonoBehaviour
 {
-   // public static GameNavigation instance;
+    private delegate void AddListeners();
 
-    [SerializeField] private Button wordsBankBtn = null;
-    [SerializeField] private Button exitBtn = null;
-    [SerializeField] private Button settingsBtn = null;
-    [SerializeField] private Button backBtn = null;
-    [SerializeField] private Button trainingBtn = null;
-    [SerializeField] private Button vendorBtn = null;
-    [SerializeField] private Button heroBtn = null;
+    [SerializeField] private Button[] allButtonsInGame;
+    private Button wordsBankBtn;
+    private Button exitBtn;
+    private Button settingsBtn;
+    private Button backBtn;
+    private Button trainingBtn;
+    private Button vendorBtn;
+    private Button heroBtn;
 
-    private GameObject mainMenuCanvas = null;
-    private GameObject _levelLoadingCanvas = null;
+    [SerializeField] private GameObject levelLoadingCanvas;
     private Slider _levelLoadingSlider = null;
 
-    private GameObject myHero = null;
+    [SerializeField] private GameObject myHero = null;
+    [SerializeField] private Animator animator;
 
-    private Animator animator;
+    public delegate void setCanvas(int sceneIndex);
+    public setCanvas ManageSceneCanvases;
+
+    public delegate void setLoadingCanvas(bool isActive);
+    public setLoadingCanvas ManageLoadingCanvas;
+    TupleList<int, Button, Action> ButtonsAndActions;
 
     private void Awake()
     {
-        /*
-        if (mainCamera == null && GameObject.Find("MainCamera"))
-        {
-            mainCamera = GameObject.Find("UICameraMainMenu").GetComponent<Camera>();
-            Debug.Log("MainCamera is: " + mainCamera);
-        }
-        if (UICameraTraining == null && GameObject.Find("UICameraTraining"))
-        {
-            UICameraTraining = GameObject.Find("UICameraTraining").GetComponent<Camera>();
-            Debug.Log("UICameraTraining is: " + UICameraTraining);
-        }
-        */
-        if (myHero == null)
-        {
-            myHero = GameObject.Find("MyHero");
-        }
-
-        if (animator == null)
-        {
-            animator = GameObject.FindWithTag("Player").GetComponent<Animator>();
-        }
+         ButtonsAndActions = new TupleList<int, Button, Action> 
+            {
+                {0, wordsBankBtn, WordBankClicked},
+                {1, exitBtn,  ExitClicked},
+                {2, settingsBtn, SettingsClicked},
+                {3, backBtn, BackClicked},
+                {4, trainingBtn, TrainingClicked},
+                {5, vendorBtn, VendorClicked},
+                {6, heroBtn, HeroClicked},
+            };
     }
 
     private void Start()
     {
-        if (_levelLoadingSlider == null && GameObject.Find("LevelLoadingSlider"))
-        {
-            _levelLoadingSlider = GameObject.Find("LevelLoadingSlider").GetComponent<Slider>();
-        }
         FindAllButtonsOnScene();
-        FindAllCanvasesOnScene();
- 
-        //DontDestroyOnLoad(gameObject);
+        _levelLoadingSlider = levelLoadingCanvas.GetComponentInChildren<Slider>();
     }
     public void FindAllButtonsOnScene()
     {
-        if (wordsBankBtn == null && GameObject.Find("Button_WordsBank"))
+        allButtonsInGame = new Button[] 
         {
-            wordsBankBtn = GameObject.Find("Button_WordsBank").GetComponent<Button>();
-            wordsBankBtn.onClick.AddListener(WordBankClicked);
-        }
-        if (exitBtn == null && GameObject.Find("Button_Exit"))
+            wordsBankBtn,
+            exitBtn,
+            settingsBtn,
+            backBtn,
+            trainingBtn,
+            vendorBtn,
+            heroBtn,
+        };
+
+        for (int i = 0; i < ButtonsAndActions.Count; i++)
         {
-            exitBtn = GameObject.Find("Button_Exit").GetComponent<Button>();
-            exitBtn.onClick.AddListener(ExitClicked);
-        }
-        if (settingsBtn == null && GameObject.Find("Button_Settings"))
-        {
-            settingsBtn = GameObject.Find("Button_Settings").GetComponent<Button>();
-            settingsBtn.onClick.AddListener(SettingsClicked);
-        }
-        if (backBtn == null && GameObject.Find("Button_Back"))
-        {
-            backBtn = GameObject.Find("Button_Back").GetComponent<Button>();
-            backBtn.onClick.AddListener(BackClicked);
-        }
-        if (trainingBtn == null && GameObject.Find("Button_Training"))
-        {
-            trainingBtn = GameObject.Find("Button_Training").GetComponent<Button>();
-            trainingBtn.onClick.AddListener(TrainingClicked);
-        }
-        if (vendorBtn == null && GameObject.Find("Button_Vendor"))
-        {
-            vendorBtn = GameObject.Find("Button_Vendor").GetComponent<Button>();
-            vendorBtn.onClick.AddListener(VendorClicked);
-        }
-        if (heroBtn == null && GameObject.Find("Button_Hero"))
-        {
-            heroBtn = GameObject.Find("Button_Hero").GetComponent<Button>();
-            heroBtn.onClick.AddListener(HeroClicked);
+            if (allButtonsInGame[i] == null && GameObject.Find(Static_strings.BUTTONS_NAMES[i]))
+            {
+                allButtonsInGame[i] = GameObject.Find($"{Static_strings.BUTTONS_NAMES[i]}").GetComponent<Button>();
+                var x = i;
+                allButtonsInGame[x].onClick.AddListener(ButtonsAndActions[i].Item3);
+            }
         }
     }
 
-    private void FindAllCanvasesOnScene()
-    {
-        if (mainMenuCanvas == null && GameObject.Find("MainMenuCanvas"))
-        {
-            mainMenuCanvas = GameObject.Find("MainMenuCanvas");
-        }
-        if (_levelLoadingCanvas == null && GameObject.Find("LevelLoadingCanvas"))
-        {
-            _levelLoadingCanvas = GameObject.Find("LevelLoadingCanvas");
-            // disable that Canvas on Start
-            _levelLoadingCanvas.SetActive(false);
-        }
-    }
-
-    public void AddAllListeners()
-    {
-        if (wordsBankBtn != null) wordsBankBtn.onClick.AddListener(WordBankClicked);
-        if (exitBtn != null) exitBtn.onClick.AddListener(ExitClicked);
-        if (settingsBtn != null) settingsBtn.onClick.AddListener(SettingsClicked);
-        if (backBtn != null) backBtn.onClick.AddListener(BackClicked);
-        if (trainingBtn) trainingBtn.onClick.AddListener(TrainingClicked);
-        if (vendorBtn) vendorBtn.onClick.AddListener(VendorClicked);
-        if (heroBtn) heroBtn.onClick.AddListener(HeroClicked);
-    }
-
-    private void OnEnable()
-    {
-       AddAllListeners();
-    }
     private void OnDisable()
     {
         if (wordsBankBtn != null) wordsBankBtn.onClick.RemoveListener(WordBankClicked);
@@ -138,14 +94,14 @@ public class GameNavigation : MonoBehaviour
         if (heroBtn) heroBtn.onClick.RemoveListener(HeroClicked);
     }
 
+
     // WordsBank scene == scene 1
     private void WordBankClicked()
     {
         if (SceneManager.GetSceneByName("WordsBank") != null)
         {
-            //SceneManager.LoadScene("WordsBank", LoadSceneMode.Additive);
             StartCoroutine(LoadAsynchronously(1, true));
-            ManageCanvases(1);
+            ManageSceneCanvases?.Invoke(1);
         }
     }
     private void ExitClicked()
@@ -162,10 +118,9 @@ public class GameNavigation : MonoBehaviour
     {
         if (SceneManager.GetSceneByName("MainMenu") != null)
         {
-            //SceneManager.LoadScene("MainMenu",LoadSceneMode.Single);
             StartCoroutine(LoadAsynchronously(0, false));
             FindAllButtonsOnScene();
-            ManageCanvases(0);
+            ManageSceneCanvases?.Invoke(0);
             myHero.GetComponent<MainHero>().ChangeHeroPosition(0);
         }
     }
@@ -177,18 +132,19 @@ public class GameNavigation : MonoBehaviour
         {
             StartCoroutine(LoadAsynchronously(2, true));
             //SceneManager.LoadScene("Training",LoadSceneMode.Additive);
-            ManageCanvases(2);
+            ManageSceneCanvases?.Invoke(2);
             myHero.GetComponent<MainHero>().ChangeHeroPosition(2);
         }
         
     }
+
     // Vendor scene == scene 3
     private void VendorClicked()
     {
         if (SceneManager.GetSceneByName("Vendor") != null)
         {
             StartCoroutine(LoadAsynchronously(3, true));
-            ManageCanvases(3);
+            ManageSceneCanvases?.Invoke(3);
             // also change hero position
             myHero.GetComponent<MainHero>().ChangeHeroPosition(3);
         }
@@ -200,21 +156,8 @@ public class GameNavigation : MonoBehaviour
         if (SceneManager.GetSceneByName("HeroMenu") != null)
         {
             StartCoroutine(LoadAsynchronously(4, true));
-            ManageCanvases(4);
+            ManageSceneCanvases?.Invoke(4);
             myHero.GetComponent<MainHero>().ChangeHeroPosition(4);
-        }
-    }
-
-    // this methods should run each time scenes change
-    private void ManageCanvases(int loadingSceneIndex)
-    {
-        if (loadingSceneIndex != 0 && mainMenuCanvas != null)
-        {
-            mainMenuCanvas.SetActive(false);
-        }
-        else if (loadingSceneIndex == 0 && mainMenuCanvas != null)
-        {
-            mainMenuCanvas.SetActive(true);
         }
     }
 
@@ -231,7 +174,7 @@ public class GameNavigation : MonoBehaviour
         {
             AsyncOperation operation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Additive);
             // enable loading Canvas
-            _levelLoadingCanvas.SetActive(true);
+            ManageLoadingCanvas?.Invoke(true);
 
             while (!operation.isDone)
             {
@@ -244,7 +187,7 @@ public class GameNavigation : MonoBehaviour
         {
             AsyncOperation operation = SceneManager.LoadSceneAsync(sceneIndex, LoadSceneMode.Single);
             // enable loading Canvas
-            _levelLoadingCanvas.SetActive(true);
+            ManageLoadingCanvas?.Invoke(true);
 
             while (!operation.isDone)
             {
@@ -265,26 +208,20 @@ public class GameNavigation : MonoBehaviour
         {
             // set Animation for MainMenu Idle
             animator.SetInteger("SceneIndex", 0);
-            Debug.Log("SceneIndex is: " + animator.GetInteger("SceneIndex"));
         }
+
         else if (sceneIndex == 2 && animator)
         {
             // set Animation for Training Idle
             animator.SetInteger("SceneIndex", 2);
-            Debug.Log("SceneIndex is: " + animator.GetInteger("SceneIndex"));
         }
-        
-
         // disable loading Canvas
-        _levelLoadingCanvas.SetActive(false);
+        ManageLoadingCanvas?.Invoke(false);
         FindAllButtonsOnScene();
-
-
     }
 
     private void FullCheckBeforeSceneLoading(int sceneIndex)
     {
-
 
     }
 

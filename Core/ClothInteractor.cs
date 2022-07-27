@@ -1,63 +1,70 @@
+using System;
+
 namespace DataArchitecture
 {
-
     public class ClothInteractor : Interactor
     {
         private ClothRepository clothRepository;
+        public string ItemsAvailableIndex => clothRepository._itemsAvailableIndex;
+        public string ItemsAvailableName => clothRepository._itemsAvailableName;
 
-        
+        public int CurrentItemHead => clothRepository.CurrentItemTop;
+        public int CurrentItemBody => clothRepository.CurrentItemBottom;
 
         public ClothInteractor(ClothRepository clothRepo)
         {
             clothRepository = clothRepo;
         }
 
-        //public List<Tuple<int, string, int>> itemsNamesList => clothRepository.itemsNamesList;
+        public string GetBodyPartName(string bodyPart, int itemIndex)
+        {
+            if (itemIndex == 0)
+            {
+                return $"{bodyPart}NoTexture";
+            }
+            else
+            {
+                return $"{bodyPart}" + clothRepository.itemsNamesList[itemIndex - 1].Item2;
+            }
+        }
 
-        public string BodyChange(int itemIndex)
+        public void AddItem(int itemIndex, string itemName)
         {
-            if (itemIndex == 0)
+            clothRepository._itemsAvailableIndex += "," + itemIndex.ToString();
+            clothRepository._itemsAvailableName += "," + itemName;
+            clothRepository.Save();
+        }
+
+        public void ResetAllStats()
+        {
+            clothRepository._itemsAvailableIndex = "0";
+            clothRepository._itemsAvailableName = "NoTexture";
+            clothRepository.CurrentItemTop = 0;
+            clothRepository.CurrentItemBottom = 0;
+            clothRepository.Save();
+        }
+        public void ItemsChanged(int itemIndex, bool isBottom)
+        {
+            if (isBottom)
             {
-                return "BodyNoTexture";
+                clothRepository.CurrentItemBottom = itemIndex;
             }
             else
             {
-                return "Body" + clothRepository.itemsNamesList[itemIndex - 1].Item2;
+                clothRepository.CurrentItemTop = itemIndex;
             }
+            clothRepository.Save();
         }
-        public string LeftLegChange(int itemIndex)
+
+        public bool ItemIsAvailable(int itemIndex)
         {
-            if (itemIndex == 0)
-            {
-                return "LeftLegNoTexture";
-            }
-            else
-            {
-                return "LeftLeg" + clothRepository.itemsNamesList[itemIndex - 1].Item2; // decrease index for 1 due the clothRepo starts with 1
-            }
+            return Array.Exists(clothRepository.itemsAvailableIndexArr, x => x == itemIndex);
         }
-        public string RightLegChange(int itemIndex)
+
+        public void ReadItemsAvailable()
         {
-            if (itemIndex == 0)
-            {
-                return "RightLegNoTexture";
-            }
-            else
-            {
-                return "RightLeg" + clothRepository.itemsNamesList[itemIndex - 1].Item2;
-            }
+            clothRepository.ReadItemsAvailable();
         }
-        //
-        public string HeadChange(int itemIndex)
-        {
-            if (itemIndex == 0) // that means we have no top item on our hero
-            {
-                return "HeadNoTexture";
-            }
-            else
-            {
-                return "Head" + clothRepository.itemsNamesList[itemIndex - 1].Item2;
-            }
-        }
+
     }
 }
